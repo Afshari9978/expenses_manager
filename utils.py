@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, date, timedelta
 
-from dateutil.relativedelta import relativedelta
-
 from models import Transaction, Goal, TransactionRow
 
 try:
@@ -17,6 +15,7 @@ IGNORE_MINIMUM_BALANCE_UNTIL = date(2023, 2, 25)
 GOAL_SAVING_WINDOW = 2 * 30
 PRINT_ROWS = 1000
 PRINT_YEARS = 8
+MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 
 def create_dates_dict() -> dict[int, list[Transaction]]:
@@ -56,7 +55,7 @@ def create_transactions(dates_dict: dict[int, list[Transaction]]) -> list[Transa
         rows.append(transaction_row)
 
     current = datetime.now().date()
-    until = (datetime.now() + relativedelta(years=PRINT_YEARS)).date()
+    until = move_month(datetime.now().date(), PRINT_YEARS * 12)
     while current < until and len(rows) < PRINT_ROWS:
         for transaction in dates_dict[current.day]:
             if not transaction.does_appear_here(current):
@@ -148,3 +147,23 @@ def _is_balance_acceptable(balance: int, current_date: date, name: str, amount: 
         f'Balance goes under minimum on {current_date.strftime("%Y-%m-%d")} \n' \
         f'    Because of {name} ({amount}) became {balance}'
     return True
+
+
+def move_month(start_date: date, amount: int = 1) -> date:
+    year, month, day = start_date.year, start_date.month, start_date.day
+    if amount > 0:
+        for _ in range(amount):
+            if month == 12:
+                month = 1
+                year += 1
+            else:
+                month += 1
+    else:
+        for _ in range(abs(amount)):
+            if month == 1:
+                month = 12
+                year -= 1
+            else:
+                month -= 1
+    day = min(MONTH_DAYS[month], day)
+    return date(year, month, day)

@@ -3,8 +3,6 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 
-from dateutil.relativedelta import relativedelta
-
 
 @dataclass
 class Transaction:
@@ -39,7 +37,9 @@ class RecurringTransaction(Transaction):
     each_month: int = 1
 
     def go_back(self, here: datetime.date):
-        return here - relativedelta(months=self.each_month)
+        from utils import move_month
+
+        return move_month(here, -self.each_month)
 
     def does_appear_here(self, here: datetime.date) -> bool:
         if self.date_affect == here:
@@ -64,6 +64,8 @@ class IncrementalTransaction(RecurringTransaction):
     increase_amount: int = 0
 
     def calculated_amount(self, date: datetime.date | None = None) -> int:
+        from utils import move_month
+
         if not date:
             return self.amount
 
@@ -71,7 +73,7 @@ class IncrementalTransaction(RecurringTransaction):
         month_counter = 0
         amount = self.amount
         while True:
-            date_cap += relativedelta(months=1)
+            date_cap = move_month(date_cap, 1)
             month_counter += 1
             if month_counter % self.increase_each_month == 0:
                 amount += self.increase_amount
