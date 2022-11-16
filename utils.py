@@ -15,6 +15,9 @@ IGNORE_MINIMUM_BALANCE_UNTIL = date(2023, 2, 25)
 GOAL_SAVING_WINDOW = 2 * 30
 PRINT_ROWS = 1000
 PRINT_YEARS = 8
+REPORT_START_OF_MONTH_DAY = 25
+REPORT_NEXT_MONTH_NAME = True
+REPORT_PLOT_LENGTH = 12 * 3
 MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 
@@ -64,6 +67,91 @@ def create_transactions(dates_dict: dict[int, list[Transaction]]) -> list[Transa
             rows.append(transaction_row)
         current = current + timedelta(days=1)
     return rows
+
+
+def calculate_rolling_difference(
+        rolling_difference_1: int | None,
+        rolling_difference_2: int | None,
+        rolling_difference_3: int | None,
+        difference: int) -> \
+        tuple[int | None, int | None, int | None, int]:
+    rolling_difference = None
+    if rolling_difference_1 is None:
+        rolling_difference_1 = difference
+        rolling_difference = difference
+    elif rolling_difference_2 is None:
+        rolling_difference_2 = difference
+        rolling_difference = int((rolling_difference_1 + rolling_difference_2) / 2)
+    elif rolling_difference_3 is None:
+        rolling_difference_3 = difference
+    else:
+        rolling_difference_1, rolling_difference_2, rolling_difference_3 = \
+            rolling_difference_2, rolling_difference_3, difference
+    if not rolling_difference:
+        rolling_difference = int((rolling_difference_1 + rolling_difference_2 + rolling_difference_3) / 3)
+
+    return rolling_difference_1, rolling_difference_2, rolling_difference_3, rolling_difference
+
+
+def create_reports(transaction_rows: list[TransactionRow]) -> dict[str, dict[str, int | date]]:
+    month_reports = {}
+    month_start = month_name = name_date = None
+    min_balance = incomes = expenses = 0
+    rolling_difference_1 = rolling_difference_2 = rolling_difference_3 = None
+    for i, transaction_row in enumerate(transaction_rows):
+        if transaction_row.transaction.date_affect is None:
+            continue
+        if month_start != transaction_row.date and transaction_row.date.day == REPORT_START_OF_MONTH_DAY:
+            if month_name:
+                difference = incomes - expenses
+                month_reports[month_name] = {
+                    'min_balance': min_balance, 'incomes': incomes, 'expenses': expenses,
+                    'difference': difference, 'name_date': name_date
+                }
+
+                rolling_difference_1, rolling_difference_2, rolling_difference_3, month_reports[month_name][
+                    'rolling_difference'] = calculate_rolling_difference(rolling_difference_1, rolling_difference_2,
+                                                                         rolling_difference_3, difference)
+
+            name_date = transaction_row.date
+            if REPORT_NEXT_MONTH_NAME:
+                name_date += timedelta(days=28)
+
+            month_name = f'{name_date.strftime("%B")} {name_date.year}'
+            month_start = transaction_row.date
+            incomes = expenses = 0
+            min_balance = transaction_row.balance
+
+        min_balance = min(min_balance, transaction_row.balance)
+        if transaction_row.amount > 0:
+            incomes += transaction_row.amount
+        else:
+            expenses -= transaction_row.amount
+
+    return month_reports
+
+
+def print_charts(month_reports: dict[str, dict[str, int | date]]) -> None:
+    import matplotlib.pyplot as plt
+
+    # gather data points
+    month_points = [report['name_date'].strftime("%m-%y") for report in list(month_reports.values())[:REPORT_PLOT_LENGTH]]
+    balance_points = [report['min_balance'] for report in list(month_reports.values())[:REPORT_PLOT_LENGTH]]
+
+    # make the plot longer
+    fig = plt.figure(figsize=(10, 3))
+    ax = fig.add_subplot(111)
+    # set points
+    ax.plot(month_points, balance_points)
+    # rotate x labels
+    plt.xticks(rotation=55, ha="right")
+    # reduce x labels
+    plot_start = list(month_reports.values())[0]['name_date'].month % 2
+    ax.set_xticks([i for i in range(plot_start, REPORT_PLOT_LENGTH, 2)])
+    # increase bottom padding
+    plt.subplots_adjust(bottom=0.2)
+
+    plt.savefig(f"plot_{datetime.now().strftime('%Y-%m-%d')}.png")
 
 
 def can_insert_transaction_on_index(
