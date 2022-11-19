@@ -17,7 +17,7 @@ PRINT_ROWS = 1000
 PRINT_YEARS = 8
 REPORT_START_OF_MONTH_DAY = 25
 REPORT_NEXT_MONTH_NAME = True
-REPORT_PLOT_LENGTH = 12 * 3
+REPORT_PLOT_LENGTH = 12 * 5
 MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 
@@ -131,15 +131,19 @@ def create_reports(transaction_rows: list[TransactionRow]) -> dict[str, dict[str
     return month_reports
 
 
-def print_charts(month_reports: dict[str, dict[str, int | date]]) -> None:
+def generate_balance_chart(month_reports: dict[str, dict[str, int | date]]) -> None:
     import matplotlib.pyplot as plt
 
+    global REPORT_PLOT_LENGTH
+
     # gather data points
-    month_points = [report['name_date'].strftime("%m-%y") for report in list(month_reports.values())[:REPORT_PLOT_LENGTH]]
+    REPORT_PLOT_LENGTH = min(REPORT_PLOT_LENGTH, len(month_reports.keys()))
+    month_points = [report['name_date'].strftime("%m-%y") for report in
+                    list(month_reports.values())[:REPORT_PLOT_LENGTH]]
     balance_points = [report['min_balance'] for report in list(month_reports.values())[:REPORT_PLOT_LENGTH]]
 
     # make the plot longer
-    fig = plt.figure(figsize=(10, 3))
+    fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111)
     # set points
     ax.plot(month_points, balance_points)
@@ -150,6 +154,8 @@ def print_charts(month_reports: dict[str, dict[str, int | date]]) -> None:
     ax.set_xticks([i for i in range(plot_start, REPORT_PLOT_LENGTH, 2)])
     # increase bottom padding
     plt.subplots_adjust(bottom=0.2)
+
+    plt.grid(axis="y", linewidth=0.3)
 
     plt.savefig(f"plot_{datetime.now().strftime('%Y-%m-%d')}.png")
 
