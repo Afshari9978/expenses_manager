@@ -6,19 +6,11 @@ from datetime import datetime, date, timedelta
 from models import Transaction, Goal, TransactionRow
 
 try:
-    from pre_defined import TRANSACTIONS
+    from data.pre_defined import TRANSACTIONS, PRINT_YEARS, PRINT_ROWS, REPORT_START_OF_MONTH_DAY, \
+        REPORT_NEXT_MONTH_NAME, GOAL_SAVING_WINDOW, IGNORE_MINIMUM_BALANCE_UNTIL, MINIMUM_BALANCE, MONTH_DAYS, \
+        REPORT_PLOT_LENGTH
 except ImportError:
-    raise ImportError("Add `pre_defined.py` file on the root, according to the `pre_defined.example.py` file.")
-
-MINIMUM_BALANCE = 500
-IGNORE_MINIMUM_BALANCE_UNTIL = date(2023, 2, 25)
-GOAL_SAVING_WINDOW = 2 * 30
-PRINT_ROWS = 1000
-PRINT_YEARS = 8
-REPORT_START_OF_MONTH_DAY = 25
-REPORT_NEXT_MONTH_NAME = True
-REPORT_PLOT_LENGTH = 12 * 5
-MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+    raise ImportError("Add `pre_defined.py` file in data folder, according to the `pre_defined.example.py` file.")
 
 
 def create_dates_dict() -> dict[int, list[Transaction]]:
@@ -157,7 +149,7 @@ def generate_balance_chart(month_reports: dict[str, dict[str, int | date]]) -> N
 
     plt.grid(axis="y", linewidth=0.3)
 
-    plt.savefig(f"plot_{datetime.now().strftime('%Y-%m-%d')}.png")
+    plt.savefig(f"data/plot_{datetime.now().strftime('%Y-%m-%d')}.png")
 
 
 def can_insert_transaction_on_index(

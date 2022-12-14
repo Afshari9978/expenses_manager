@@ -6,7 +6,7 @@ from models import TransactionRow
 
 
 def export(transaction_rows: list[TransactionRow]):
-    filename = f"export_{datetime.datetime.now().strftime('%Y-%m-%d')}.xlsx"
+    filename = f"data/export_{datetime.datetime.now().strftime('%Y-%m-%d')}.xlsx"
 
     workbook = Workbook()
     sheet = workbook.active

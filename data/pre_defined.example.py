@@ -1,9 +1,17 @@
 from datetime import date
 
-
 from models import Transaction, RecurringTransaction, Goal, IncrementalTransaction
 
 HOLIDAY_TAX = 12 * 0.08 * 0.48
+MINIMUM_BALANCE = 500
+IGNORE_MINIMUM_BALANCE_UNTIL = date(2023, 5, 25)
+GOAL_SAVING_WINDOW = 4 * 30
+PRINT_ROWS = 1000
+PRINT_YEARS = 8
+REPORT_START_OF_MONTH_DAY = 25
+REPORT_NEXT_MONTH_NAME = True
+REPORT_PLOT_LENGTH = 12 * 5
+MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 TRANSACTIONS = [
     # Incomes

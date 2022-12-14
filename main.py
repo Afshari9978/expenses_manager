@@ -4,6 +4,7 @@ from utils import create_dates_dict, create_transactions, fit_goals_in, create_r
 if __name__ == '__main__':
     dates_dict = create_dates_dict()
     transaction_rows = create_transactions(dates_dict)
+    transaction_rows = fit_goals_in(transaction_rows)
 
     month_reports = create_reports(transaction_rows)
     print("Average monthly difference: ", end="")
@@ -11,8 +12,6 @@ if __name__ == '__main__':
     print("Month report objects: ", end="")
     print(month_reports)
     generate_balance_chart(month_reports)
-
-    transaction_rows = fit_goals_in(transaction_rows)
 
     print("Goals' situation:", end="\n    ")
     for transaction_row in reversed(transaction_rows):
