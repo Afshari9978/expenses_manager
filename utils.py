@@ -6,9 +6,9 @@ from datetime import datetime, date, timedelta
 from models import Transaction, Goal, TransactionRow
 
 try:
-    from data.pre_defined import TRANSACTIONS, PRINT_YEARS, PRINT_ROWS, REPORT_START_OF_MONTH_DAY, \
-        REPORT_NEXT_MONTH_NAME, GOAL_SAVING_WINDOW, IGNORE_MINIMUM_BALANCE_UNTIL, MINIMUM_BALANCE, MONTH_DAYS, \
-        REPORT_PLOT_LENGTH
+    from data.pre_defined import TRANSACTIONS, PRINT_YEARS, REPORT_START_OF_MONTH_DAY, \
+    REPORT_NEXT_MONTH_NAME, GOAL_SAVING_WINDOW, IGNORE_MINIMUM_BALANCE_UNTIL, MINIMUM_BALANCE, MONTH_DAYS, \
+    REPORT_PLOT_LENGTH
 except ImportError:
     raise ImportError("Add `pre_defined.py` file in data folder, according to the `pre_defined.example.py` file.")
 
@@ -51,7 +51,7 @@ def create_transactions(dates_dict: dict[int, list[Transaction]]) -> list[Transa
 
     current = datetime.now().date()
     until = move_month(datetime.now().date(), PRINT_YEARS * 12)
-    while current < until and len(rows) < PRINT_ROWS:
+    while current < until:
         for transaction in dates_dict[current.day]:
             if not transaction.does_appear_here(current):
                 continue
@@ -186,26 +186,30 @@ def insert_transaction(target: Transaction, on_index: int, transaction_rows: lis
 
 def insert_goal(goal: Goal, transaction_rows: list[TransactionRow]) -> None:
     index = 0
-    if goal.date_affect is not None:
+    if any((goal.date_affect, goal.date_start)):
+        start_date = transaction_rows[0].date
+        if goal.date_affect:
+            start_date = max(start_date, goal.date_affect - timedelta(days=GOAL_SAVING_WINDOW))
+        if goal.date_start:
+            start_date = max(start_date, goal.date_start)
+
         for transaction in transaction_rows:
-            if transaction.date <= max(
-                    goal.date_affect - timedelta(days=GOAL_SAVING_WINDOW),
-                    transaction_rows[0].date
-            ):
+            if transaction.date <= start_date:
                 index += 1
                 continue
             break
 
     for transaction in transaction_rows[index:]:
         if goal.date_affect and transaction.date > goal.date_affect:
-            print(f"Goal {goal.name} expired")
+            print(f"{goal.label()} expired")
+            break
 
-        can_insert, balance, balance_date = can_insert_transaction_on_index(goal, index, transaction_rows, False)
+        can_insert, _, _ = can_insert_transaction_on_index(goal, index, transaction_rows, False)
         if can_insert:
             insert_transaction(goal, index, transaction_rows)
             return None
         index += 1
-    print(f"Goal {goal.name} didn't took place")
+    print(f"{goal.label()} didn't took place")
 
 
 def fit_goals_in(transaction_rows: list[TransactionRow]) -> list[TransactionRow]:
@@ -225,7 +229,6 @@ def _is_balance_acceptable(balance: int, current_date: date, name: str, amount: 
         _MINIMUM_BALANCE = MINIMUM_BALANCE
     else:
         _MINIMUM_BALANCE = 0
-
     if not raise_assert and balance < _MINIMUM_BALANCE:
         return False
 
@@ -239,11 +242,8 @@ def move_month(start_date: date, amount: int = 1) -> date:
     year, month, day = start_date.year, start_date.month, start_date.day
     if amount > 0:
         for _ in range(amount):
-            if month == 12:
-                month = 1
-                year += 1
-            else:
-                month += 1
+            month = (month % 12) + 1
+            year = year + (month + 1 > 12)
     else:
         for _ in range(abs(amount)):
             if month == 1:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
+from functools import cached_property
 
 
 @dataclass
@@ -26,6 +27,7 @@ class Transaction:
 class Goal(Transaction):
     date_affect = None
     importance: int = 0
+    date_start: datetime.date | None = None
 
     def label(self):
         return f'Goal ({self.importance}): {self.name}'
@@ -91,7 +93,7 @@ class TransactionRow:
     def amount(self):
         return self.transaction.calculated_amount(self.date)
 
-    @property
+    @cached_property
     def name(self):
         label = self.transaction.label()
         if label.startswith("="):
