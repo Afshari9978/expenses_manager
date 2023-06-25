@@ -77,7 +77,7 @@ class IncrementalTransaction(RecurringTransaction):
         while True:
             date_cap = move_month(date_cap, 1)
             month_counter += 1
-            if month_counter % self.increase_each_month == 0:
+            if self.increase_each_month == 1 or month_counter % self.increase_each_month == 0:
                 amount += self.increase_amount
             if date <= date_cap:
                 return amount

@@ -45,14 +45,14 @@ def create_transactions(dates_dict: dict[int, list[Transaction]]) -> list[Transa
     rows = []
     balance = 0
 
-    for transaction in dates_dict[0]:
+    for transaction in sorted(dates_dict[0], key=lambda x:x.amount, reverse=True):
         balance, transaction_row = create_row(balance, date(2000, 1, 1), transaction, rows)
         rows.append(transaction_row)
 
     current = datetime.now().date()
     until = move_month(datetime.now().date(), PRINT_YEARS * 12)
     while current < until:
-        for transaction in dates_dict[current.day]:
+        for transaction in sorted(dates_dict[current.day], key=lambda x:x.amount, reverse=True):
             if not transaction.does_appear_here(current):
                 continue
             balance, transaction_row = create_row(balance, current, transaction, rows)
@@ -242,8 +242,11 @@ def move_month(start_date: date, amount: int = 1) -> date:
     year, month, day = start_date.year, start_date.month, start_date.day
     if amount > 0:
         for _ in range(amount):
-            month = (month % 12) + 1
-            year = year + (month + 1 > 12)
+            if month == 12:
+                month = 1
+                year += 1
+            else:
+                month += 1
     else:
         for _ in range(abs(amount)):
             if month == 1:
