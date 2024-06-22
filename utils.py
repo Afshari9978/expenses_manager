@@ -122,6 +122,19 @@ def create_reports(transaction_rows: list[TransactionRow]) -> dict[str, dict[str
 
     return month_reports
 
+def generate_monthly_average_reports(month_reports: dict[str, dict[str, int | date]]) -> None:
+    sums = defaultdict(int)
+    lengths = defaultdict(int)
+    for month in month_reports.values():
+        sums['===='] += month['difference']
+        lengths['===='] += 1
+
+        sums[month['name_date'].year] += month['difference']
+        lengths[month['name_date'].year] += 1
+
+    for year in sums:
+        if sums[year] and lengths[year]:
+            print(f"{year} average monthly difference: {sums[year] // lengths[year]}")
 
 def generate_balance_chart(month_reports: dict[str, dict[str, int | date]]) -> None:
     import matplotlib.pyplot as plt
@@ -225,10 +238,8 @@ def _is_balance_acceptable(balance: int, current_date: date, name: str, amount: 
     if amount >= 0:
         return True
 
-    if current_date > IGNORE_MINIMUM_BALANCE_UNTIL:
-        _MINIMUM_BALANCE = MINIMUM_BALANCE
-    else:
-        _MINIMUM_BALANCE = 0
+    _MINIMUM_BALANCE = MINIMUM_BALANCE if current_date > IGNORE_MINIMUM_BALANCE_UNTIL else 0
+
     if not raise_assert and balance < _MINIMUM_BALANCE:
         return False
 
