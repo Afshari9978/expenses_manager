@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass
-from functools import cached_property
 
 
 @dataclass
@@ -11,7 +10,7 @@ class Transaction:
     amount: int
     date_affect: datetime.date | None = None
 
-    def does_appear_here(self, here: datetime.date) -> bool:
+    def does_appear_on_this_day(self, here: datetime.date) -> bool:
         if self.date_affect == here:
             return True
         return False
@@ -27,7 +26,6 @@ class Transaction:
 class Goal(Transaction):
     date_affect = None
     importance: int = 0
-    date_start: datetime.date | None = None
 
     def label(self):
         return f'Goal ({self.importance}): {self.name}'
@@ -43,7 +41,7 @@ class RecurringTransaction(Transaction):
 
         return move_month(here, -self.each_month)
 
-    def does_appear_here(self, here: datetime.date) -> bool:
+    def does_appear_on_this_day(self, here: datetime.date) -> bool:
         if self.date_affect == here:
             return True
         if self.date_affect > here:
@@ -60,50 +58,3 @@ class RecurringTransaction(Transaction):
         return False
 
 
-@dataclass
-class IncrementalTransaction(RecurringTransaction):
-    increase_each_month: int = 12
-    increase_amount: int = 0
-
-    def calculated_amount(self, date: datetime.date | None = None) -> int:
-        from utils import move_month
-
-        if not date:
-            return self.amount
-
-        date_cap = self.date_affect
-        month_counter = 0
-        amount = self.amount
-        while True:
-            date_cap = move_month(date_cap, 1)
-            month_counter += 1
-            if self.increase_each_month == 1 or month_counter % self.increase_each_month == 0:
-                amount += self.increase_amount
-            if date <= date_cap:
-                return amount
-
-
-@dataclass
-class TransactionRow:
-    date: datetime.date
-    transaction: Transaction
-    balance: int
-
-    @property
-    def amount(self):
-        return self.transaction.calculated_amount(self.date)
-
-    @cached_property
-    def name(self):
-        label = self.transaction.label()
-        if label.startswith("="):
-            new_label = self.date.strftime('= %B ') + label.strip()[2:]
-            white_space = int((80 - len(new_label)) / 2)
-            return "=" * white_space + new_label + "=" * white_space
-        return self.transaction.label()
-
-    def __str__(self):
-        return f'{self.date.strftime("%Y-%m-%d")} | ' \
-               f'{str(self.name).ljust(80)} | ' \
-               f'{str(self.amount).rjust(8)} | ' \
-               f'{str(self.balance).rjust(8)}'

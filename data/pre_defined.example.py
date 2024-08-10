@@ -1,23 +1,20 @@
 from datetime import date
 
-from models import Transaction, RecurringTransaction, Goal, IncrementalTransaction
+from models import Transaction, RecurringTransaction, Goal
 
 HOLIDAY_TAX = 12 * 0.08 * 0.48
 MINIMUM_BALANCE = 500
-IGNORE_MINIMUM_BALANCE_UNTIL = date(2023, 5, 25)
 GOAL_SAVING_WINDOW = 4 * 30
 PRINT_ROWS = 1000
 PRINT_YEARS = 8
 REPORT_START_OF_MONTH_DAY = 25
 REPORT_NEXT_MONTH_NAME = True
 REPORT_PLOT_LENGTH = 12 * 5
-MONTH_DAYS = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 TRANSACTIONS = [
     # Incomes
-    IncrementalTransaction('= Salary =', 4060, date(2022, 2, 25), date(2027, 1, 31), increase_amount=500),
-    IncrementalTransaction('Holiday Allowance', int(4060 * HOLIDAY_TAX), date(2022, 5, 25),
-                           increase_amount=int(500 * HOLIDAY_TAX), each_month=12),
+    RecurringTransaction('= Salary =', 4060, date(2022, 2, 25), date(2027, 1, 31)),
+    RecurringTransaction('Holiday Allowance', int(4060 * HOLIDAY_TAX), date(2022, 5, 25), each_month=12),
 
     # Subscriptions
     RecurringTransaction('Xbox GamePass', -13, date(2022, 11, 1)),
@@ -59,17 +56,8 @@ TRANSACTIONS = [
     Transaction('France return NL living costs', 300, date(2023, 1, 28)),
 
     # Goals
-    # I want it now (10)
-    # I can wait for it (8)
-    Goal('Airpod pro 2', -300, None, 8),
     Goal('Ace & Tate sunglasses', -250, None, 8),
-    # I need it (6)
     Goal('Gazelle City Bike', -1500, None, 6),
-    # I need it but it's fancy (4)
     Goal('Roborock', -1750, None, 4),
-    # I don't need it, nice to have (2)
     Goal('Driving License', -3000, None, 2),
-    # I don't care if I have it (0)
-    Goal('Gazelle e-bike', -6500, None, 0),
-
 ]
