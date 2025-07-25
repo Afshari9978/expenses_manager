@@ -43,7 +43,8 @@ def create_transaction_row(
             balance=initial_amount,
             current_date=current_date,
             name=transaction.name,
-            amount=transaction_amount
+            amount=transaction_amount,
+            minimum_balance=MINIMUM_BALANCE,
         )
     except LowBalanceException as e:
         # Stop processing transactions if the balance is lower that allowed, plus, printing transactions until here
@@ -169,6 +170,7 @@ def can_insert_transaction_on_already_processed_rows(
             current_date=transaction_rows[after_index - 1].date,
             name=target.name,
             amount=target.calculated_amount(transaction_rows[after_index].date),
+            minimum_balance=0,
             raise_exception=False
     ):
         return False
@@ -180,6 +182,7 @@ def can_insert_transaction_on_already_processed_rows(
                 current_date=transaction_row.date,
                 name=transaction_row.name,
                 amount=transaction_row.amount,
+                minimum_balance=0,
                 raise_exception=False
         ):
             return False
@@ -213,7 +216,7 @@ def insert_goal(goal: Goal, transaction_rows: list[TransactionRow]) -> None:
             insert_transaction(goal, index, transaction_rows)
             return None
         index += 1
-    print(f"\033[93m{goal.label()} didn't took place\033[0m") # Color it yellow
+    print(f"\033[93m{goal.label()} didn't took place\033[0m")  # Color it yellow
 
 
 def skip_transaction_rows_to_date(to_date: date, index, transaction_rows):
@@ -234,12 +237,12 @@ def fit_goals_in(transaction_rows: list[TransactionRow]) -> list[TransactionRow]
     return transaction_rows
 
 
-def _is_balance_acceptable(balance: int, current_date: date, name: str, amount: int,
+def _is_balance_acceptable(balance: int, current_date: date, name: str, amount: int, minimum_balance: int,
                            raise_exception: bool = True) -> bool:
     if amount >= 0:
         return True
 
-    if balance >= MINIMUM_BALANCE:
+    if balance >= minimum_balance:
         return True
 
     if not raise_exception:

@@ -6,17 +6,18 @@ if __name__ == '__main__':
         transaction_rows = generate_transaction_rows()
     except LowBalanceException:
         exit()
-    transaction_rows = fit_goals_in(transaction_rows)
 
     month_reports = create_reports(transaction_rows)
     generate_yearly_average_difference_reports(month_reports)
     print("Month report objects: ", end="")
     print(month_reports)
-    generate_balance_chart(month_reports)
+    # generate_balance_chart(month_reports)
+
+    transaction_rows = fit_goals_in(transaction_rows)
 
     print("Goals' situation:", end="\n    ")
     for transaction_row in reversed(transaction_rows):
-        if "Goal" in transaction_row.name or transaction_row.name.startswith("Credit payback"):
+        if "Goal" in transaction_row.name or transaction_row.name.startswith("+ Credit payback"):
             print(transaction_row, end="\n    ")
 
     export_excel(transaction_rows)
