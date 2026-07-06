@@ -1,56 +1,37 @@
 from __future__ import annotations
 
+import csv
 import datetime
-from datetime import date
+import shutil
 
-from openpyxl import Workbook
-
+from pathlib import Path
 from utils_models import TransactionRow
 
 
-def export_excel(transaction_rows: list[TransactionRow]) -> None:
-    filename = f"data/export_{datetime.datetime.now().strftime('%Y-%m-%d')}.xlsx"
+def export_csv(transaction_rows: list[TransactionRow]) -> None:
+    filename = f"data/export_{datetime.datetime.now().strftime('%Y-%m-%d')}.csv"
 
-    workbook = Workbook()
-    sheet = workbook.active
+    headers = ["date", "transaction name", "amount", "balance"]
+    data = [
+        [
+            transaction_row.date.strftime("%Y-%m-%d"),
+            transaction_row.transaction.name,
+            transaction_row.amount,
+            transaction_row.balance,
+        ] for transaction_row in transaction_rows
+    ]
 
-    sheet[f'A1'] = sheet[f'B1'] = sheet[f'C1'] = sheet[f'E1'] = 0
-    sheet[f'D1'] = "Zero for a reason"
+    with open(filename, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
 
-    for i, row in enumerate(transaction_rows):
-        sheet[f'A{i + 2}'] = row.date.strftime("%Y")
-        sheet[f'B{i + 2}'] = row.date.strftime("%m")
-        sheet[f'C{i + 2}'] = row.date.strftime("%d")
-        sheet[f'D{i + 2}'] = row.transaction.label().replace("=", "--")
-        sheet[f'E{i + 2}'] = row.amount
-
-    workbook.save(filename=filename)
+        writer.writerow(headers)
+        writer.writerows(data)
 
 
-def generate_balance_chart(month_reports: dict[str, dict[str, int | date]]) -> None:
-    import matplotlib.pyplot as plt
+def export_inputs(transaction_rows: list[TransactionRow]) -> None:
+    filename = f"data/inputs_{datetime.datetime.now().strftime('%Y-%m-%d')}.py"
 
-    from data.pre_defined import REPORT_PLOT_LENGTH
+    inputs_file = Path("data/pre_defined.py")
+    export_file = Path(filename)
 
-    # gather data points
-    REPORT_PLOT_LENGTH = min(REPORT_PLOT_LENGTH, len(month_reports.keys()))
-    month_points = [report['name_date'].strftime("%m-%y") for report in
-                    list(month_reports.values())[:REPORT_PLOT_LENGTH]]
-    balance_points = [report['min_balance'] for report in list(month_reports.values())[:REPORT_PLOT_LENGTH]]
-
-    # make the plot longer
-    fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111)
-    # set points
-    ax.plot(month_points, balance_points)
-    # rotate x labels
-    plt.xticks(rotation=55, ha="right")
-    # reduce x labels
-    plot_start = list(month_reports.values())[0]['name_date'].month % 2
-    ax.set_xticks([i for i in range(plot_start, REPORT_PLOT_LENGTH, 2)])
-    # increase bottom padding
-    plt.subplots_adjust(bottom=0.2)
-
-    plt.grid(axis="y", linewidth=0.3)
-
-    plt.savefig(f"data/plot_{datetime.datetime.now().strftime('%Y-%m-%d')}.png")
+    shutil.copy2(inputs_file, export_file)

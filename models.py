@@ -10,6 +10,13 @@ class Transaction:
     amount: int
     date_affect: datetime.date | None = None
 
+    def __post_init__(self):
+        if self.date_affect is None or self.__class__ == RecurringTransaction:
+            return
+        if self.date_affect > datetime.date.today():
+            return
+        raise ValueError(f"date_affect for '{self.name}' cannot be in the past. ")
+
     def does_appear_on_this_day(self, here: datetime.date) -> bool:
         if self.date_affect == here:
             return True
@@ -56,5 +63,3 @@ class RecurringTransaction(Transaction):
             here = self.go_back(here)
 
         return False
-
-

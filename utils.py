@@ -70,6 +70,7 @@ def generate_transaction_rows() -> list[TransactionRow]:
     # Now start from today until the end of the PRINT_YEARS to generate transactions
     current_day = datetime.now().date()
     last_day_to_report = move_month(datetime.now().date(), PRINT_YEARS * 12)
+    last_day_to_report = date(last_day_to_report.year + 1, 1, 1)
     while current_day < last_day_to_report:
         for transaction in sorted(dates_dict[current_day.day], key=lambda x: x.amount, reverse=True):
             if not transaction.does_appear_on_this_day(current_day):
